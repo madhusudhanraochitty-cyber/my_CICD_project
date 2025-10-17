@@ -2,7 +2,7 @@ variables:
 - name: ServiceConnection
   value: s101D.bsvc.cip.azdo
 - name: databricks_workspace_url
-  value: "https://adb-5037484389568426.6.azuredatabricks.net"
+  value: "https://dbc-76bff370-bd72.cloud.databricks.com"
 - name: environment
   value: dev_s163
 - name: Clds_ClusterId
