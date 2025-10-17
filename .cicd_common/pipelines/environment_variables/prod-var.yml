@@ -1,0 +1,8 @@
+variables:
+
+- name: ServiceConnection
+  value: s101P.bsvc.cip.azdo
+- name: databricks_workspace_url
+  value: "https://adb-5037484389568426.6.azuredatabricks.net"
+- name: environment
+  value: prod

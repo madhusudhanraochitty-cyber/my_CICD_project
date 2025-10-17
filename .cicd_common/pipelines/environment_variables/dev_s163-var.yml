@@ -1,0 +1,11 @@
+variables:
+- name: ServiceConnection
+  value: s101D.bsvc.cip.azdo
+- name: databricks_workspace_url
+  value: "https://adb-5037484389568426.6.azuredatabricks.net"
+- name: environment
+  value: dev_s163
+- name: Clds_ClusterId
+  value: "0113-190048-iq7x45ca"
+- name: groupName
+  value: "DEV-OPERATIONAL_LEARNER_DATA_STORE-OPERATOR_ADMIN"

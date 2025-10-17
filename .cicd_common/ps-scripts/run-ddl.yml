@@ -1,0 +1,126 @@
+#Pipeline for Databricks Jobs Create/Update
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+parameters:   
+- name: datasetName 
+  displayName: Select dataset
+  type: string
+  default: "SCAut"
+  values:
+  - "SCAut"
+  - "SCSpr"
+  - "SCSum"
+  - "Reference"
+  - "APC"
+  - "Control"
+  - "Common"
+  - "CIN"
+  - "CLA"
+  - "CYPMD"
+  - "EYC"
+  - "EYFSP"
+  - "HESA"
+  - "ILR"
+  - "KS2"
+  - "MTC"
+  - "NCCIS"
+  - "Phonics"
+  - "RBA"
+  
+stages:
+- stage: BUILD
+  displayName: Build
+
+  jobs:
+  - job: Build
+    displayName: Build
+
+    steps:
+    - checkout: self
+      path: s/databricks
+    - task: PublishPipelineArtifact@1
+      displayName: Publish Artifacts
+      inputs:
+        targetPath: $(System.DefaultWorkingDirectory)/
+        artifact: 'drop'
+
+- stage: DEV_S163
+  displayName: 'Dev_s163'
+  dependsOn: BUILD
+  condition: succeeded('BUILD')
+  jobs:
+  - template: 'pipelines/ddl-bundledeployment-stage.yml'
+    parameters:
+      jobName: 'RunDDLScripts'
+      jobDisplayName: 'Run DDL Scripts'
+      deployVariableFile: /.cicd_common/pipelines/environment_variables/dev_s163-var.yml
+      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-dev_s163.yml
+      envName: 'Dev_s163'
+      agentPoolName: 'DD-Hosted-Dev'
+      datasetName: ${{parameters.datasetName}}
+
+- stage: TEST_S163
+  displayName: 'Test_s163'
+  dependsOn: DEV_S163
+  condition: succeeded('DEV_S163')
+  jobs:
+  - template: 'pipelines/ddl-bundledeployment-stage.yml'
+    parameters:
+      jobName: 'RunDDLScripts'
+      jobDisplayName: 'Run DDL Scripts'
+      deployVariableFile: /.cicd_common/pipelines/environment_variables/test_s163-var.yml
+      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-test_s163.yml
+      envName: 'Test'
+      agentPoolName: 'DD-Hosted Test'
+      datasetName: ${{parameters.datasetName}}
+
+- stage: SIT_S163
+  displayName: 'SIT_S163'
+  dependsOn: TEST_S163
+  condition: succeeded('TEST_S163')
+  jobs:
+  - template: 'pipelines/ddl-bundledeployment-stage.yml'
+    parameters:
+      jobName: 'RunDDLScripts'
+      jobDisplayName: 'Run DDL Scripts'
+      deployVariableFile: /.cicd_common/pipelines/environment_variables/sit_s163-var.yml
+      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-sit_s163.yml
+      envName: 'SIT'
+      agentPoolName: 'DD-Hosted SIT'
+      datasetName: ${{parameters.datasetName}}
+
+- stage: PREPROD_S163
+  displayName: 'PreProd_s163'
+  dependsOn: SIT_S163
+  condition: succeeded('SIT_S163')
+  jobs:
+  - template: 'pipelines/ddl-bundledeployment-stage.yml'
+    parameters:
+      jobName: 'RunDDLScripts'
+      jobDisplayName: 'Run DDL Scripts'
+      deployVariableFile: /.cicd_common/pipelines/environment_variables/preprod_s163-var.yml
+      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-preprod_s163.yml
+      envName: 'PreProd'
+      agentPoolName: 'DD-Hosted-PreProd'
+      datasetName: ${{parameters.datasetName}}
+
+
+# - stage: PROD_S163
+#   displayName: 'Prod_s163'
+#   dependsOn: PREPROD_S163
+#   condition: succeeded('PREPROD_S163')
+#   jobs:
+#   - template: 'pipelines/ddl-bundledeployment-stage.yml'
+#     parameters:
+#       jobName: 'RunDDLScripts'
+#       jobDisplayName: 'Run DDL Scripts'
+#       deployVariableFile: /.cicd_common/pipelines/environment_variables/prod_s163-var.yml
+#       projectVariableFile: /.cicd_project_variables/environment_variables/credentials-prod_s163.yml
+#       envName: 'Prod'
+#       agentPoolName: 'DD-Hosted-Prod'
+#       datasetName: ${{parameters.datasetName}}
+  
