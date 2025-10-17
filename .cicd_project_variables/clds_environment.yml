@@ -1,0 +1,21 @@
+#
+# This file contains variables used that change between environment
+#
+variables:
+    # variable definitions that are assigned environment specific values
+    job_alert_email_address:
+        description: "Email address to receive notifications on job runs"
+    schedule_pause_status:
+        description: "Status of schedules in target environment PAUSED or UNPAUSED"
+
+targets:
+    dev:
+        variables:      
+            job_alert_email_address: "madhu.sudhanraochitty@gmail.com"
+            schedule_pause_status: "PAUSED"
+    prod:
+        variables:      
+            job_alert_email_address: "madhu.sudhanraochitty@gmail.com"
+            schedule_pause_status: "PAUSED"       
+
+    

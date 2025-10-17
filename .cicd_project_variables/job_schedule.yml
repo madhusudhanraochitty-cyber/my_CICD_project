@@ -1,0 +1,18 @@
+# use this file add schedules to specific jobs in each environment.
+#
+# paused_status must have the value PAUSED or UNPAUSED
+#
+targets:
+    prod_s163:
+        resources:
+            jobs:
+                olds_ao_ingestion_master:
+                    schedule:
+                        pause_status: UNPAUSED
+                        quartz_cron_expression: 21 0 1 * * ?
+                        timezone_id: UTC
+                clds_ao_ofqual_register_ingestion_master:
+                    schedule:
+                        pause_status: UNPAUSED
+                        quartz_cron_expression: 40 0 6 ? * Mon
+                        timezone_id: UTC

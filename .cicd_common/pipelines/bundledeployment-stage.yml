@@ -1,0 +1,75 @@
+parameters:
+- name: jobName
+  type: string
+  default: ''
+- name: jobDisplayName
+  type: string
+  default: ''
+- name: deployVariableFile
+  type: string
+  default: ''
+- name: projectVariableFile
+  type: string
+  default: ''  
+- name: envName
+  type: string
+  default: ''
+- name: environment
+  type: string
+  default: ''
+- name: agentPoolName
+  type: string
+  default: ''
+- name: syncOnly
+  type: string
+  default: 'N'
+  
+
+jobs:
+- deployment: ${{parameters.jobName}}
+  displayName: ${{parameters.jobDisplayName}}
+  environment: ${{parameters.envName}}
+  pool:
+    name: ${{parameters.agentPoolName}}
+  workspace:
+    clean: all
+
+  variables:
+  - template:  ${{parameters.deployVariableFile}}
+  - template:  ${{parameters.projectVariableFile}}  
+  - name: inputFolderPath
+    value: $(Pipeline.Workspace)/drop/databricks
+  - name: exeFolderPath
+    value: $(Pipeline.Workspace)/drop/databricks-deployment
+
+  strategy:
+   runOnce:
+    deploy:
+      steps:
+
+      - task: DownloadPipelineArtifact@2
+        inputs:
+          buildType: current
+          targetPath: '$(Pipeline.Workspace)'
+
+      - task: AzureKeyVault@2
+        displayName: 'Download existing keyvault secrets'
+        inputs:
+          azureSubscription: ${{variables.ServiceConnection}}
+          keyVaultName: ${{variables.ServicePrincipalSecretKeyVault}}
+          secretsFilter: '${{variables.ServicePrincipalName}}'
+          runAsPreJob: true
+
+      - task: PowerShell@2
+        displayName: 'Deploy Bundle'
+        inputs:
+          targetType: 'filePath'
+          filePath: '$(Pipeline.Workspace)/drop/databricks-deployment/scripts/databricks-deploy-bundle.ps1'
+          arguments: >
+            -DBRHOST "$(databricks_workspace_url)"
+            -SPNID "$(ServicePrincipalId)"
+            -SPNSECRET "$(${{variables.ServicePrincipalName}})"
+            -INPUTFOLDER "$(inputFolderPath)"
+            -ENV "$(environment)"
+            -SYNCONLY "${{parameters.syncOnly}}"
+            -EXEFOLDER "$(exeFolderPath)"

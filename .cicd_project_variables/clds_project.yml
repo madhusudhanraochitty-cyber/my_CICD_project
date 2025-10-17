@@ -1,0 +1,13 @@
+#
+# This file contains project specific variables that are consistent across environments
+#
+bundle:
+  name: operational_learner_data_store
+
+variables:
+    project_root:
+        description: "Root directory for all project artifacts"
+        default: "/02-Pipelines/Operational_Learner_Data_Store"
+    account_group_dataset_name:
+        description: "Middle part of the UC Group names"
+        default: "OPERATIONAL_LEARNER_DATA_STORE"
