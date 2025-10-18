@@ -26,11 +26,12 @@ jobs:
         run: |
           mkdir -p ~/.databricks
           # write INI-style config which databricks-cli v0.18 expects
-          cat > ~/.databricks/config <<'INI'
+          # Use an unquoted heredoc so env vars are expanded
+          cat > ~/.databricks/config <<EOF
 [DEFAULT]
 host = ${DATABRICKS_HOST}
 token = ${DATABRICKS_TOKEN}
-INI
+EOF
           echo "----- ~/.databricks/config -----"
           cat ~/.databricks/config
           echo "--------------------------------"
