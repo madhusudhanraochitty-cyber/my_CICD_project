@@ -8,73 +8,48 @@ on:
 
 jobs:
   sync:
-    name: Sync and Deploy to Databricks
     runs-on: ubuntu-latest
 
     steps:
-      # -----------------------------
-      # Step 1: Checkout repository
-      # -----------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # -----------------------------
-      # Step 2: Install Databricks CLI
-      # -----------------------------
       - name: Install Databricks CLI
         run: |
           python -m pip install --upgrade pip
           pip install databricks-cli==0.18.0
 
-      # -----------------------------
-      # Step 3: Configure Databricks CLI
-      # (v0.18.0 requires INI-style config)
-      # -----------------------------
-      - name: Configure Databricks CLI
+      - name: Configure Databricks CLI (INI format for v0.18)
         env:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
           mkdir -p ~/.databricks
-          cat > ~/.databricks/config <<EOF
+          # write INI-style config which databricks-cli v0.18 expects
+          cat > ~/.databricks/config <<'INI'
 [DEFAULT]
 host = ${DATABRICKS_HOST}
 token = ${DATABRICKS_TOKEN}
-EOF
-          echo "✅ Databricks CLI configured."
+INI
+          echo "----- ~/.databricks/config -----"
+          cat ~/.databricks/config
+          echo "--------------------------------"
 
-      # -----------------------------
-      # Step 4: Verify CLI & workspace
-      # -----------------------------
-      - name: Debug Databricks environment
+      - name: Debug: databricks binary & version & list workspace root
         run: |
-          which databricks || echo "Databricks CLI not on PATH"
-          databricks --version
-          echo "Listing workspace root..."
-          databricks workspace ls / || echo "⚠️ Could not list workspace root (check permissions)"
+          which databricks || echo "databricks not on PATH"
+          databricks --version || true
+          databricks workspace ls / || echo "workspace ls failed or empty"
 
-      # -----------------------------
-      # Step 5: Sync GitHub Repo with Databricks Repo
-      # -----------------------------
-      - name: Sync Databricks Repo
+      - name: Sync repo to Databricks Repo
         run: |
-          echo "🚀 Syncing GitHub repo with Databricks Repo..."
-          if databricks repos update --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project --branch main; then
-            echo "✅ Repo already exists — updated to latest main branch."
-          else
-            echo "⚙️ Repo not found — creating new Databricks Repo..."
-            databricks repos create \
-              --url https://github.com/madhusudhanraochitty-cyber/my_CICD_project \
-              --provider gitHub \
-              --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project
-            echo "✅ New Databricks Repo created successfully."
-          fi
+          echo "🚀 Syncing GitHub repo to Databricks Repo..."
+          databricks repos update --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project --branch main \
+            || databricks repos create --url https://github.com/vlsadineni/Databricks --provider gitHub --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project
+          echo "✅ Repo synced successfully."
 
-      # -----------------------------
-      # Step 6: Upload notebooks to Databricks Workspace
-      # -----------------------------
-      - name: Upload Notebooks to Workspace
+      - name: Upload notebooks to Databricks Workspace
         run: |
-          echo "📁 Uploading notebooks to Databricks Workspace..."
+          echo "📁 Uploading notebooks folder..."
           databricks workspace import_dir ./notebooks "/Workspace/Users/madhu.sudhanraochitty@gmail.com/Databricks_Notebooks" --overwrite
-          echo "✅ Notebooks uploaded successfully."
+          echo "✅ Notebooks uploaded to Databricks Workspace."
