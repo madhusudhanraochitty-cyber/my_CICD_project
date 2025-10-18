@@ -25,11 +25,13 @@ jobs:
 
       - name: Verify Databricks CLI authentication
         run: |
-          echo "Checking Databricks connection..."
+          echo "🔐 Checking Databricks connection..."
+          mkdir -p ~/.databricks                              # ✅ Create the folder first
           echo "[DEFAULT]" > ~/.databricks/config
           echo "host = $DATABRICKS_HOST" >> ~/.databricks/config
           echo "token = $DATABRICKS_TOKEN" >> ~/.databricks/config
           chmod 600 ~/.databricks/config
+          echo "CLI configuration created at ~/.databricks/config"
           databricks --version
           databricks workspace ls / || (echo "❌ Databricks authentication failed" && exit 1)
           echo "✅ Databricks CLI authentication successful."
@@ -47,6 +49,7 @@ jobs:
               --provider gitHub \
               --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project
           fi
+          echo "✅ Repo synced successfully."
 
       - name: Upload notebooks to Databricks Workspace
         run: |
