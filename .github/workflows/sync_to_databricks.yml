@@ -19,19 +19,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install databricks-cli==0.18.0
 
-      - name: Configure Databricks CLI (INI format for v0.18)
+      - name: Configure Databricks CLI (safe YAML version)
         env:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
           mkdir -p ~/.databricks
-          # Use an unquoted heredoc so env vars expand
-          cat > ~/.databricks/config <<EOF
-[DEFAULT]
-host = ${DATABRICKS_HOST}
-token = ${DATABRICKS_TOKEN}
-EOF
-          echo "✅ Databricks CLI config written."
+          echo "[DEFAULT]" > ~/.databricks/config
+          echo "host = ${DATABRICKS_HOST}" >> ~/.databricks/config
+          echo "token = ${DATABRICKS_TOKEN}" >> ~/.databricks/config
+          echo "✅ Databricks CLI configuration written."
 
       - name: Debug: databricks binary & version & list workspace root
         run: |
@@ -43,18 +40,18 @@ EOF
         run: |
           echo "🚀 Syncing GitHub repo to Databricks Repo..."
           if databricks repos update --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project --branch main; then
-            echo "✅ Repo exists and was updated to main."
+            echo "✅ Repo already exists — updated to latest main branch."
           else
-            echo "⚙️ Repo not found — creating in Databricks..."
+            echo "⚙️ Repo not found — creating new Databricks Repo..."
             databricks repos create \
               --url https://github.com/madhusudhanraochitty-cyber/my_CICD_project \
               --provider gitHub \
               --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project
-            echo "✅ Repo created."
+            echo "✅ New Databricks Repo created successfully."
           fi
 
       - name: Upload notebooks to Databricks Workspace
         run: |
           echo "📁 Uploading notebooks folder..."
           databricks workspace import_dir ./notebooks "/Workspace/Users/madhu.sudhanraochitty@gmail.com/Databricks_Notebooks" --overwrite
-          echo "✅ Notebooks uploaded to Databricks Workspace."
+          echo "✅ Notebooks uploaded successfully."
