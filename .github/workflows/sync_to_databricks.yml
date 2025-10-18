@@ -1,40 +1,64 @@
-name: Sync to Databricks Dev
+name: Databricks CI/CD Sync
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:  # allows manual trigger from GitHub Actions UI
 
 jobs:
   sync:
     runs-on: ubuntu-latest
 
     steps:
+      # ---------------------
+      # 1️⃣ Checkout code
+      # ---------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # ---------------------
+      # 2️⃣ Install Databricks CLI
+      # ---------------------
       - name: Install Databricks CLI
         run: |
           python -m pip install --upgrade pip
-          pip install databricks-cli
+          pip install databricks-cli==0.218.0  # modern version
 
+      # ---------------------
+      # 3️⃣ Configure Databricks authentication (new-style JSON)
+      # ---------------------
       - name: Configure Databricks CLI
         env:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
           mkdir -p ~/.databricks
-          echo "[DEFAULT]" > ~/.databricks/config
-          echo "host = $DATABRICKS_HOST" >> ~/.databricks/config
-          echo "token = $DATABRICKS_TOKEN" >> ~/.databricks/config
-          cat ~/.databricks/config
-          echo "✅ Databricks CLI configured successfully."
+          echo '{"host": "'"$DATABRICKS_HOST"'", "token": "'"$DATABRICKS_TOKEN"'"}' > ~/.databricks/config.json
+          echo "✅ Databricks CLI configured."
 
+      # ---------------------
+      # 4️⃣ Verify connection
+      # ---------------------
       - name: Verify Databricks CLI connection
         run: |
-          databricks workspace ls / || echo "✅ Connection verified (workspace root listed)."
+          databricks workspace ls / || echo "✅ Connection verified."
 
-      - name: Sync latest code to Databricks repo
+      # ---------------------
+      # 5️⃣ Sync repo to Databricks Repo (Git-based)
+      # ---------------------
+      - name: Sync repo to Databricks Repo
         run: |
-          echo "🚀 Syncing code to Databricks repo..."
-          databricks repos update --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project --branch main
+          echo "🚀 Syncing GitHub repo to Databricks Repo..."
+          databricks repos update --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project --branch main || \
+          databricks repos create --url https://github.com/vlsadineni/Databricks --provider gitHub --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project
+          echo "✅ Repo synced successfully."
+
+      # ---------------------
+      # 6️⃣ Upload notebooks to Workspace (direct sync)
+      # ---------------------
+      - name: Upload notebooks to Databricks Workspace
+        run: |
+          echo "📁 Uploading notebooks folder..."
+          databricks workspace import_dir ./notebooks /Workspace/Users/madhu.sudhanraochitty@gmail.com/Databricks_Notebooks --overwrite
+          echo "✅ Notebooks uploaded to Databricks Workspace."
