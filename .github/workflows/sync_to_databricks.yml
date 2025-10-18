@@ -10,40 +10,30 @@ jobs:
   sync:
     runs-on: ubuntu-latest
 
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
     steps:
-      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Install Databricks CLI
       - name: Install Databricks CLI
         run: |
           python -m pip install --upgrade pip
           pip install databricks-cli==0.18.0
 
-      # Step 3: Configure Databricks CLI (expand environment variables properly)
-      - name: Configure Databricks CLI
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      - name: Verify Databricks CLI authentication
         run: |
-          mkdir -p ~/.databricks
+          echo "Checking Databricks connection..."
           echo "[DEFAULT]" > ~/.databricks/config
           echo "host = $DATABRICKS_HOST" >> ~/.databricks/config
           echo "token = $DATABRICKS_TOKEN" >> ~/.databricks/config
           chmod 600 ~/.databricks/config
-          echo "✅ Databricks CLI configured successfully."
-          cat ~/.databricks/config
-
-      # Step 4: Verify CLI authentication
-      - name: Verify Databricks CLI authentication
-        run: |
-          echo "Checking Databricks connection..."
           databricks --version
           databricks workspace ls / || (echo "❌ Databricks authentication failed" && exit 1)
           echo "✅ Databricks CLI authentication successful."
 
-      # Step 5: Sync GitHub repo to Databricks Repo
       - name: Sync repo to Databricks Repo
         shell: bash
         run: |
@@ -57,9 +47,7 @@ jobs:
               --provider gitHub \
               --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project
           fi
-          echo "✅ Repo synced successfully."
 
-      # Step 6: Upload notebooks to Databricks Workspace
       - name: Upload notebooks to Databricks Workspace
         run: |
           echo "📁 Uploading notebooks..."
