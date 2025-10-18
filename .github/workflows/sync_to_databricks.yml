@@ -19,7 +19,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install databricks-cli==0.18.0
 
-      - name: Configure Databricks CLI (safe YAML version)
+      - name: Configure Databricks CLI
         env:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
@@ -28,30 +28,13 @@ jobs:
           echo "[DEFAULT]" > ~/.databricks/config
           echo "host = ${DATABRICKS_HOST}" >> ~/.databricks/config
           echo "token = ${DATABRICKS_TOKEN}" >> ~/.databricks/config
-          echo "✅ Databricks CLI configuration written."
 
-      - name: Debug: databricks binary & version & list workspace root
+      - name: Check Databricks CLI
         run: |
-          which databricks || echo "databricks not on PATH"
           databricks --version || true
           databricks workspace ls / || echo "workspace ls failed or empty"
 
       - name: Sync repo to Databricks Repo
         run: |
-          echo "🚀 Syncing GitHub repo to Databricks Repo..."
-          if databricks repos update --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project --branch main; then
-            echo "✅ Repo already exists — updated to latest main branch."
-          else
-            echo "⚙️ Repo not found — creating new Databricks Repo..."
-            databricks repos create \
-              --url https://github.com/madhusudhanraochitty-cyber/my_CICD_project \
-              --provider gitHub \
-              --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project
-            echo "✅ New Databricks Repo created successfully."
-          fi
-
-      - name: Upload notebooks to Databricks Workspace
-        run: |
-          echo "📁 Uploading notebooks folder..."
-          databricks workspace import_dir ./notebooks "/Workspace/Users/madhu.sudhanraochitty@gmail.com/Databricks_Notebooks" --overwrite
-          echo "✅ Notebooks uploaded successfully."
+          echo "Syncing GitHub repo to Databricks Repo..."
+          if databricks repos update --path /Repos/madhu.sudhanraochitty
