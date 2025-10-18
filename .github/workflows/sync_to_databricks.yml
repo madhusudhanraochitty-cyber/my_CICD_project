@@ -45,7 +45,7 @@ INI
         run: |
           echo "🚀 Syncing GitHub repo to Databricks Repo..."
           databricks repos update --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project --branch main \
-            || databricks repos create --url https://github.com/vlsadineni/Databricks --provider gitHub --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project
+            || databricks repos create --url https://github.com/madhusudhanraochitty-cyber/my_CICD_project --provider gitHub --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project
           echo "✅ Repo synced successfully."
 
       - name: Upload notebooks to Databricks Workspace
