@@ -40,7 +40,7 @@ jobs:
         shell: bash
         run: |
           echo "🚀 Syncing GitHub repo to Databricks Repo..."
-          if databricks repos update --path /Workspace/Users/madhu.sudhanraochitty@gmail.com/my_CICD_project --branch main; then
+          if databricks repos update --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project --branch main; then
             echo "✅ Repo updated to main."
           else
             echo "⚠️ Repo not found, creating new one..."
