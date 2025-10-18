@@ -35,6 +35,20 @@ jobs:
           databricks workspace ls / || echo "workspace ls failed or empty"
 
       - name: Sync repo to Databricks Repo
+        shell: bash
         run: |
           echo "Syncing GitHub repo to Databricks Repo..."
-          if databricks repos update --path /Repos/madhu.sudhanraochitty
+          if databricks repos update --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project --branch main; then
+            echo "Repo updated to main."
+          else
+            echo "Repo not found, creating new one..."
+            databricks repos create \
+              --url https://github.com/madhusudhanraochitty-cyber/my_CICD_project \
+              --provider gitHub \
+              --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project
+          fi
+
+      - name: Upload notebooks to Databricks Workspace
+        run: |
+          echo "Uploading notebooks..."
+          databricks workspace import_dir ./notebooks "/Workspace/Users/madhu.sudhanraochitty@gmail.com/Databricks_Notebooks" --overwrite
