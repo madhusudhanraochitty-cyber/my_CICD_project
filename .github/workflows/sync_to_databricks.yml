@@ -26,13 +26,16 @@ jobs:
         run: |
           mkdir -p ~/.databricks
           echo "[DEFAULT]" > ~/.databricks/config
-          echo "host = ${DATABRICKS_HOST}" >> ~/.databricks/config
-          echo "token = ${DATABRICKS_TOKEN}" >> ~/.databricks/config
+          echo "host = $DATABRICKS_HOST" >> ~/.databricks/config
+          echo "token = $DATABRICKS_TOKEN" >> ~/.databricks/config
+          chmod 600 ~/.databricks/config
+          echo "Databricks CLI configured successfully."
 
-      - name: Check Databricks CLI
+      - name: Validate CLI setup
         run: |
-          databricks --version || true
-          databricks workspace ls / || echo "workspace ls failed or empty"
+          echo "Checking CLI version and workspace access..."
+          databricks --version
+          databricks workspace ls / || echo "⚠️ Workspace listing failed."
 
       - name: Sync repo to Databricks Repo
         shell: bash
