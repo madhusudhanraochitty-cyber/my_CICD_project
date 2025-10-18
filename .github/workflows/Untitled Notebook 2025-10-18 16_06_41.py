@@ -1,0 +1,26 @@
+# Databricks notebook source
+name: Sync to Databricks (Free Edition)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install Databricks CLI
+        run: pip install databricks-cli
+
+      - name: Upload code to Databricks workspace
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: |
+          databricks workspace import_dir . /Workspace/Users/madhu.sudhanraochitty@gmail.com/my_CICD_project --overwrite
+

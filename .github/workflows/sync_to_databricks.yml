@@ -1,4 +1,4 @@
-name: Sync to Databricks (Free Edition)
+name: Sync to Databricks Dev
 
 on:
   push:
@@ -16,9 +16,15 @@ jobs:
       - name: Install Databricks CLI
         run: pip install databricks-cli
 
-      - name: Upload code to Databricks workspace
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      - name: Configure Databricks CLI
         run: |
-          databricks workspace import_dir . /Workspace/Users/madhu.sudhanraochitty@gmail.com/my_CICD_project --overwrite
+          mkdir -p ~/.databricks
+          cat <<EOF > ~/.databricks/config
+          [DEFAULT]
+          host = ${{ secrets.DATABRICKS_HOST }}
+          token = ${{ secrets.DATABRICKS_TOKEN }}
+          EOF
+
+      - name: Sync code to Databricks repo
+        run: |
+          databricks repos update --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project --branch main
