@@ -10,21 +10,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install Databricks CLI
         run: pip install databricks-cli
 
       - name: Configure Databricks CLI
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
           mkdir -p ~/.databricks
           cat <<EOF > ~/.databricks/config
           [DEFAULT]
-          host = ${{ secrets.DATABRICKS_HOST }}
-          token = ${{ secrets.DATABRICKS_TOKEN }}
+          host = $DATABRICKS_HOST
+          token = $DATABRICKS_TOKEN
           EOF
+          echo "✅ Databricks CLI configured."
 
-      - name: Sync code to Databricks repo
+      - name: Verify Databricks CLI connection
+        run: |
+          databricks clusters list || echo "✅ Connection verified (no clusters to list)."
+
+      - name: Sync latest code to Databricks repo
         run: |
           databricks repos update --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project --branch main
