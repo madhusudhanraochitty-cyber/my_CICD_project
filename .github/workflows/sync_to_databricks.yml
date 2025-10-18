@@ -25,16 +25,13 @@ jobs:
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
           mkdir -p ~/.databricks
-          # write INI-style config which databricks-cli v0.18 expects
-          # Use an unquoted heredoc so env vars are expanded
+          # Use an unquoted heredoc so env vars expand
           cat > ~/.databricks/config <<EOF
 [DEFAULT]
 host = ${DATABRICKS_HOST}
 token = ${DATABRICKS_TOKEN}
 EOF
-          echo "----- ~/.databricks/config -----"
-          cat ~/.databricks/config
-          echo "--------------------------------"
+          echo "✅ Databricks CLI config written."
 
       - name: Debug: databricks binary & version & list workspace root
         run: |
@@ -45,9 +42,16 @@ EOF
       - name: Sync repo to Databricks Repo
         run: |
           echo "🚀 Syncing GitHub repo to Databricks Repo..."
-          databricks repos update --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project --branch main \
-            || databricks repos create --url https://github.com/madhusudhanraochitty-cyber/my_CICD_project --provider gitHub --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project
-          echo "✅ Repo synced successfully."
+          if databricks repos update --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project --branch main; then
+            echo "✅ Repo exists and was updated to main."
+          else
+            echo "⚙️ Repo not found — creating in Databricks..."
+            databricks repos create \
+              --url https://github.com/madhusudhanraochitty-cyber/my_CICD_project \
+              --provider gitHub \
+              --path /Repos/madhu.sudhanraochitty@gmail.com/my_CICD_project
+            echo "✅ Repo created."
+          fi
 
       - name: Upload notebooks to Databricks Workspace
         run: |
