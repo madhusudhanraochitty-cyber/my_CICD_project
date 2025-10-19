@@ -54,5 +54,5 @@ jobs:
       - name: Upload notebooks to Databricks Workspace
         run: |
           echo "📁 Uploading notebooks..."
-          databricks workspace import_dir ./notebooks "/Workspace/Users/madhu.sudhanraochitty@gmail.com/Databricks_Notebooks" --overwrite
+          databricks workspace import_dir . "/Workspace/Users/madhu.sudhanraochitty@gmail.com/Databricks_Notebooks" --overwrite
           echo "✅ Notebooks uploaded successfully."
