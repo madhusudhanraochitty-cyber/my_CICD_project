@@ -1,0 +1,10 @@
+#
+# This file contains project specific variables that are consistent across environments
+#
+bundle:
+  name: data_engineering_framework
+
+variables:
+    project_root:
+        description: "Root directory for all project artifacts"
+        default: "/02-Pipelines/Data_Engineering"

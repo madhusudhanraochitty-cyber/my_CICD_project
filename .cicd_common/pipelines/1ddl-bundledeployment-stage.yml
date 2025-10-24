@@ -1,0 +1,54 @@
+parameters:
+- name: datasetName
+- name: jobName
+- name: jobDisplayName
+- name: envName
+- name: agentPoolName
+- name: deployVariableFile
+- name: projectVariableFile
+
+jobs:
+- deployment: ${{parameters.jobName}}
+  displayName: ${{parameters.jobDisplayName}}
+  environment: ${{parameters.envName}}
+  pool:
+    name: ${{parameters.agentPoolName}}
+  workspace:
+    clean: all
+
+  variables:
+  - template:  ${{parameters.deployVariableFile}}
+  - template:  ${{parameters.projectVariableFile}}  
+  # - name: exeFolderPath
+  #   value: $(Pipeline.Workspace)/drop/databricks-deployment
+
+  strategy:
+   runOnce:
+    deploy:
+      steps:
+
+      - task: DownloadPipelineArtifact@2
+        inputs:
+          buildType: current
+          targetPath: '$(Pipeline.Workspace)'
+
+      - task: AzureKeyVault@2
+        displayName: 'Download existing keyvault secrets'
+        inputs:
+          azureSubscription: ${{variables.ServiceConnection}}
+          keyVaultName: ${{variables.ServicePrincipalSecretKeyVault}}
+          secretsFilter: '${{variables.ServicePrincipalName}}'
+          runAsPreJob: true
+
+      - task: PowerShell@2
+        displayName: 'Deploy ddl Bundle'
+        inputs:
+          targetType: 'filePath'
+          filePath: '$(Pipeline.Workspace)/drop/.cicd_common/ps-scripts/execute-test-script.ps1'
+          arguments: >
+            -DBRHOST "$(databricks_workspace_url)"
+            -SPNID "$(ServicePrincipalId)"
+            -SPNSECRET "$(${{variables.ServicePrincipalName}})"
+            -datasetName "${{parameters.datasetName}}"
+            -existingClusterId "${{variables.Clds_ClusterId}}"
+            -groupName "${{variables.groupName}}"

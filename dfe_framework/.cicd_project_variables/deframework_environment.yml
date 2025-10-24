@@ -1,0 +1,24 @@
+#
+# This file contains variables used that change between environment
+#
+# variables:
+#     # variable definitions that are assigned environment specific values
+#     example_variable:
+#         description: "An example variable with different values in each environment"
+
+# targets:
+#     dev:
+#         variables:      
+#             example_variable: "this_is_development"
+#     test:
+#         variables:      
+#             example_variable: "this_is_test"
+#     SIT:
+#         variables:      
+#             example_variable: "this_is_SIT"
+#     preprod:
+#         variables:      
+#             example_variable: "this_is_preprod"
+#     prod:
+#         variables:      
+#             example_variable: "this_is_prod"

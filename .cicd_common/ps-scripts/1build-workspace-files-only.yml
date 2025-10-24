@@ -1,0 +1,62 @@
+#Pipeline for Databricks Jobs Create/Update
+trigger:
+  branches:
+    exclude:
+      - main
+      - develop
+
+  paths:
+    include:
+      - /bundle/*
+    exclude:
+      - /bundle/jobs/*
+      - /bundle/dlt_pipelines/*
+
+stages:
+- stage: BUILD
+  displayName: Build
+
+  jobs:
+  - job: Build
+    displayName: Build
+
+    steps:
+    - checkout: self
+      path: s/databricks
+    - checkout: git://s101-DataHub/databricks-deltalake-data-engineering-framework@databricks-asset-bundles/20250207
+      path: s/databricks-deployment
+    - task: PublishPipelineArtifact@1
+      displayName: Publish Artifacts
+      inputs:
+        targetPath: $(System.DefaultWorkingDirectory)/
+        artifact: 'drop'
+
+- stage: DEV
+  displayName: 'Dev'
+  dependsOn: BUILD
+  condition: succeeded('BUILD')
+  jobs:
+  - template: 'pipelines/bundledeployment-stage.yml'
+    parameters:
+      jobName: 'DeployBundle'
+      jobDisplayName: 'Deploy Asset Bundle'
+      deployVariableFile: /.cicd_common/pipelines/environment_variables/dev-var.yml
+      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-dev.yml
+      envName: 'Dev'
+      agentPoolName: 'DD-Hosted-Dev'
+      syncOnly: 'Y'
+
+- stage: DEV_S163
+  displayName: 'Dev_s163'
+  dependsOn: BUILD
+  condition: succeeded('BUILD')
+  jobs:
+  - template: 'pipelines/bundledeployment-stage.yml'
+    parameters:
+      jobName: 'DeployBundle'
+      jobDisplayName: 'Deploy Asset Bundle'
+      deployVariableFile: /.cicd_common/pipelines/environment_variables/dev_s163-var.yml
+      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-dev_s163.yml
+      envName: 'Dev_s163'
+      agentPoolName: 'DD-Hosted-Dev'
+      syncOnly: 'Y'      

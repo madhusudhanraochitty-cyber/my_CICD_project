@@ -1,0 +1,46 @@
+{
+  "output_format": "yaml",
+  "version": "1.0.0",
+  "description": "Substitutions required for Operational Learner Data Store jobs and DLTs in Asset Bundle format",
+  "job_extract": {
+    "tag_name": "dtp_group",
+    "tag_value": "olds"
+  },
+  "job_permissions": [
+    { "group_name": "${var.account_group_environment_prefix_ucase}-SP-${var.account_group_dataset_name}", "level": "CAN_MANAGE" },
+    { "group_name": "${var.account_group_environment_prefix_ucase}-${var.account_group_dataset_name}-OPERATOR_ADMIN", "level": "CAN_MANAGE" },
+    { "group_name": "${var.account_group_environment_prefix_ucase}-${var.account_group_dataset_name}-SUPPORT", "level": "CAN_MANAGE_RUN" }
+  ],
+  "job_parameterisation": {
+    ".*": {
+      "-deployment": "",
+      "-edit_mode": "",
+      "job_clusters": {
+        "new_cluster": {
+          "+custom_tags": {
+            "+databricks_workload": "clds",
+            "+databricks_workflow": "${job_name}",
+            "+databricks_env": "${databricks_workspace_name}"
+          },
+          "policy_id": "${policy_id_dfe_job_compute}"
+        }
+      },
+      "email_notifications": {
+        "on_start": [
+          "${job_alert_email_address}"
+        ],
+        "on_success": [
+          "${job_alert_email_address}"
+        ],
+        "on_failure": [
+          "${job_alert_email_address}"
+        ]
+      },
+      "schedule": {
+        "pause_status": "${schedule_pause_status}"
+      }
+    }
+  },
+  "dlt_parameterisation": {
+  }
+}
