@@ -1,4 +1,10 @@
-#Pipeline for Databricks Jobs Create/Update
+# ===========================================================
+# Pipeline for Databricks Jobs Create/Update
+# ===========================================================
+# This pipeline builds and deploys Databricks Asset Bundles
+# for different environments (Dev, Dev_s163, etc.)
+# ===========================================================
+
 trigger:
   branches:
     exclude:
@@ -12,51 +18,93 @@ trigger:
       - /bundle/jobs/*
       - /bundle/dlt_pipelines/*
 
+# ===========================================================
+# 🧱 BUILD STAGE
+# ===========================================================
 stages:
 - stage: BUILD
-  displayName: Build
+  displayName: "Build Databricks Bundle"
 
   jobs:
   - job: Build
-    displayName: Build
+    displayName: "Build Job for Databricks Bundles"
 
     steps:
+    # -------------------------------------------------------
+    # 1️⃣ Checkout your own CICD project repository
+    # -------------------------------------------------------
     - checkout: self
-      path: s/databricks
-    - checkout: git://s101-DataHub/databricks-deltalake-data-engineering-framework@databricks-asset-bundles/20250207
+      path: s/my_CICD_project
+
+    # -------------------------------------------------------
+    # 2️⃣ Checkout the shared Databricks Data Engineering Framework
+    # -------------------------------------------------------
+    - checkout: - checkout: git://github.com/madhusudhanraochitty-cyber/  my_CICD_project@testnew
       path: s/databricks-deployment
+
+      path: s/databricks-deployment
+
+    # -------------------------------------------------------
+    # 3️⃣ Publish build artifacts for later deployment
+    # -------------------------------------------------------
     - task: PublishPipelineArtifact@1
-      displayName: Publish Artifacts
+      displayName: "Publish Build Artifacts"
       inputs:
         targetPath: $(System.DefaultWorkingDirectory)/
-        artifact: 'drop'
+        artifact: "drop"
 
+# ===========================================================
+# 🧪 DEV ENVIRONMENT STAGE
+# ===========================================================
 - stage: DEV
-  displayName: 'Dev'
+  displayName: "Deploy to Dev Environment"
   dependsOn: BUILD
   condition: succeeded('BUILD')
-  jobs:
-  - template: 'pipelines/bundledeployment-stage.yml'
-    parameters:
-      jobName: 'DeployBundle'
-      jobDisplayName: 'Deploy Asset Bundle'
-      deployVariableFile: /.cicd_common/pipelines/environment_variables/dev-var.yml
-      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-dev.yml
-      envName: 'Dev'
-      agentPoolName: 'DD-Hosted-Dev'
-      syncOnly: 'Y'
 
+  jobs:
+  - template: "pipelines/bundledeployment-stage.yml"
+    parameters:
+      jobName: "DeployBundle"
+      jobDisplayName: "Deploy Databricks Asset Bundle"
+      deployVariableFile: "/.cicd_common/pipelines/environment_variables/dev-var.yml"
+      projectVariableFile: "/.cicd_project_variables/environment_variables/credentials-dev.yml"
+      envName: "Dev"
+      agentPoolName: "DD-Hosted-Dev"
+      syncOnly: "Y"
+
+# ===========================================================
+# 🧪 DEV_S163 ENVIRONMENT STAGE
+# ===========================================================
 - stage: DEV_S163
-  displayName: 'Dev_s163'
+  displayName: "Deploy to Dev_s163 Environment"
   dependsOn: BUILD
   condition: succeeded('BUILD')
+
   jobs:
-  - template: 'pipelines/bundledeployment-stage.yml'
+  - template: "pipelines/bundledeployment-stage.yml"
     parameters:
-      jobName: 'DeployBundle'
-      jobDisplayName: 'Deploy Asset Bundle'
-      deployVariableFile: /.cicd_common/pipelines/environment_variables/dev_s163-var.yml
-      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-dev_s163.yml
-      envName: 'Dev_s163'
-      agentPoolName: 'DD-Hosted-Dev'
-      syncOnly: 'Y'      
+      jobName: "DeployBundle"
+      jobDisplayName: "Deploy Databricks Asset Bundle"
+      deployVariableFile: "/.cicd_common/pipelines/environment_variables/dev_s163-var.yml"
+      projectVariableFile: "/.cicd_project_variables/environment_variables/credentials-dev_s163.yml"
+      envName: "Dev_s163"
+      agentPoolName: "DD-Hosted-Dev"
+      syncOnly: "Y"
+
+# ===========================================================
+# (Optional) Future environments (e.g. QA / PROD)
+# ===========================================================
+# - stage: PROD
+#   displayName: "Deploy to Production"
+#   dependsOn: DEV_S163
+#   condition: succeeded('DEV_S163')
+#   jobs:
+#   - template: "pipelines/bundledeployment-stage.yml"
+#     parameters:
+#       jobName: "DeployBundle"
+#       jobDisplayName: "Deploy Production Asset Bundle"
+#       deployVariableFile: "/.cicd_common/pipelines/environment_variables/prod-var.yml"
+#       projectVariableFile: "/.cicd_project_variables/environment_variables/credentials-prod.yml"
+#       envName: "Prod"
+#       agentPoolName: "DD-Hosted-Prod"
+#       syncOnly: "N"
