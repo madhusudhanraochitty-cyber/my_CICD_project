@@ -39,7 +39,7 @@ stages:
     # -------------------------------------------------------
     # 2️⃣ Checkout the shared Databricks Data Engineering Framework
     # -------------------------------------------------------
-    - checkout: - checkout: git://github.com/madhusudhanraochitty-cyber/  my_CICD_project@testnew
+    - checkout: git://github.com/madhusudhanraochitty-cyber/my_CICD_project@main
       path: s/databricks-deployment
 
       path: s/databricks-deployment
