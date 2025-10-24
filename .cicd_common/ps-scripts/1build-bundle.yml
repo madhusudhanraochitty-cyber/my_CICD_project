@@ -1,0 +1,173 @@
+#Pipeline for Databricks Jobs Create/Update
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+  paths:
+    include:
+      - /bundle/*
+    exclude:
+      - /bundle/setup/scripts/ddls/*
+
+stages:
+- stage: BUILD
+  displayName: Build
+
+  jobs:
+  - job: Build
+    displayName: Build
+
+    steps:
+    - checkout: self
+      path: s/databricks
+    - checkout: git://s101-DataHub/databricks-deltalake-data-engineering-framework@databricks-asset-bundles/20250423
+      path: s/databricks-deployment
+    - task: PublishPipelineArtifact@1
+      displayName: Publish Artifacts
+      inputs:
+        targetPath: $(System.DefaultWorkingDirectory)/
+        artifact: 'drop'
+
+- stage: DEV
+  displayName: 'Dev'
+  dependsOn: BUILD
+  condition: succeeded('BUILD')
+  jobs:
+  - template: 'pipelines/bundledeployment-stage.yml'
+    parameters:
+      jobName: 'DeployBundle'
+      jobDisplayName: 'Deploy Asset Bundle'
+      deployVariableFile: /.cicd_common/pipelines/environment_variables/dev-var.yml
+      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-dev.yml
+      envName: 'Dev'
+      agentPoolName: 'DD-Hosted-Dev'
+
+- stage: DEV_S163
+  displayName: 'Dev_s163'
+  dependsOn: BUILD
+  condition: succeeded('BUILD')
+  jobs:
+  - template: 'pipelines/bundledeployment-stage.yml'
+    parameters:
+      jobName: 'DeployBundle'
+      jobDisplayName: 'Deploy Asset Bundle'
+      deployVariableFile: /.cicd_common/pipelines/environment_variables/dev_s163-var.yml
+      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-dev_s163.yml
+      envName: 'Dev_s163'
+      agentPoolName: 'DD-Hosted-Dev'
+
+- stage: TEST
+  displayName: 'Test'
+  dependsOn: 
+  - DEV
+  condition: and(succeeded('DEV'), eq(variables['build.sourceBranch'], 'refs/heads/main'))
+  jobs:
+  - template: 'pipelines/bundledeployment-stage.yml'
+    parameters:
+      jobName: 'DeployBundle'
+      jobDisplayName: 'Deploy Asset Bundle'
+      deployVariableFile: /.cicd_common/pipelines/environment_variables/test-var.yml
+      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-test.yml
+      envName: 'Test'
+      agentPoolName: 'DD-Hosted Test'
+
+- stage: TEST_S163
+  displayName: 'Test_s163'
+  dependsOn: DEV_S163
+  condition: and(succeeded('DEV_S163'), eq(variables['build.sourceBranch'], 'refs/heads/main'))
+  jobs:
+  - template: 'pipelines/bundledeployment-stage.yml'
+    parameters:
+      jobName: 'DeployBundle'
+      jobDisplayName: 'Deploy Asset Bundle'
+      deployVariableFile: /.cicd_common/pipelines/environment_variables/test_s163-var.yml
+      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-test_s163.yml
+      envName: 'Test'
+      agentPoolName: 'DD-Hosted Test'
+
+- stage: SIT
+  displayName: 'SIT'
+  dependsOn: TEST
+  condition: and(succeeded('TEST'), eq(variables['build.sourceBranch'], 'refs/heads/main'))
+  jobs:
+  - template: 'pipelines/bundledeployment-stage.yml'
+    parameters:
+      jobName: 'DeployBundle'
+      jobDisplayName: 'Deploy Asset Bundle'
+      deployVariableFile: /.cicd_common/pipelines/environment_variables/sit-var.yml
+      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-sit.yml
+      envName: 'SIT'
+      agentPoolName: 'DD-Hosted SIT'
+
+- stage: SIT_S163
+  displayName: 'SIT_S163'
+  dependsOn: TEST_S163
+  condition: and(succeeded('TEST_S163'), eq(variables['build.sourceBranch'], 'refs/heads/main'))
+  jobs:
+  - template: 'pipelines/bundledeployment-stage.yml'
+    parameters:
+      jobName: 'DeployBundle'
+      jobDisplayName: 'Deploy Asset Bundle'
+      deployVariableFile: /.cicd_common/pipelines/environment_variables/sit_s163-var.yml
+      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-sit_s163.yml
+      envName: 'SIT'
+      agentPoolName: 'DD-Hosted SIT'
+
+- stage: PREPROD
+  displayName: 'PreProd'
+  dependsOn: SIT
+  condition: and(succeeded('SIT'), eq(variables['build.sourceBranch'], 'refs/heads/main'))
+  jobs:
+  - template: 'pipelines/bundledeployment-stage.yml'
+    parameters:
+      jobName: 'DeployBundle'
+      jobDisplayName: 'Deploy Asset Bundle'
+      deployVariableFile: /.cicd_common/pipelines/environment_variables/preprod-var.yml
+      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-preprod.yml
+      envName: 'PreProd'
+      agentPoolName: 'DD-Hosted-PreProd'
+
+- stage: PREPROD_S163
+  displayName: 'PreProd_s163'
+  dependsOn: SIT_S163
+  condition: and(succeeded('SIT_S163'), eq(variables['build.sourceBranch'], 'refs/heads/main'))
+  jobs:
+  - template: 'pipelines/bundledeployment-stage.yml'
+    parameters:
+      jobName: 'DeployBundle'
+      jobDisplayName: 'Deploy Asset Bundle'
+      deployVariableFile: /.cicd_common/pipelines/environment_variables/preprod_s163-var.yml
+      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-preprod_s163.yml
+      envName: 'PreProd'
+      agentPoolName: 'DD-Hosted-PreProd'
+
+- stage: PROD
+  displayName: 'Prod'
+  dependsOn: PREPROD
+  condition: and(succeeded('PREPROD'), eq(variables['build.sourceBranch'], 'refs/heads/main'))
+  jobs:
+  - template: 'pipelines/bundledeployment-stage.yml'
+    parameters:
+      jobName: 'DeployBundle'
+      jobDisplayName: 'Deploy Asset Bundle'
+      deployVariableFile: /.cicd_common/pipelines/environment_variables/prod-var.yml
+      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-prod.yml
+      envName: 'Prod'
+      agentPoolName: 'DD-Hosted-Prod'
+
+- stage: PROD_S163
+  displayName: 'Prod_s163'
+  dependsOn: PREPROD_S163
+  condition: and(succeeded('PREPROD_S163'), eq(variables['build.sourceBranch'], 'refs/heads/main'))
+  jobs:
+  - template: 'pipelines/bundledeployment-stage.yml'
+    parameters:
+      jobName: 'DeployBundle'
+      jobDisplayName: 'Deploy Asset Bundle'
+      deployVariableFile: /.cicd_common/pipelines/environment_variables/prod_s163-var.yml
+      projectVariableFile: /.cicd_project_variables/environment_variables/credentials-prod_s163.yml
+      envName: 'Prod'
+      agentPoolName: 'DD-Hosted-Prod'
+  
