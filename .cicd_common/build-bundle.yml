@@ -22,7 +22,7 @@ stages:
     steps:
     - checkout: self
       path: s/databricks
-    - checkout: git://s101-DataHub/databricks-deltalake-data-engineering-framework@databricks-asset-bundles/20250423
+    -  checkout: git://github.com/madhusudhanraochitty-cyber/my_CICD_project@main
       path: s/databricks-deployment
     - task: PublishPipelineArtifact@1
       displayName: Publish Artifacts
